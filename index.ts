@@ -6,8 +6,8 @@
 // running our tests, we don't want to actually run the program.
 // The `* as foo` syntax is probably some artifact of CommonJS vs. ES6 modules
 // that Node.js is migrating to. Le sigh.
-import * as path from 'node:path'
-import * as process from 'node:process'
+import * as path from "node:path";
+import * as process from "node:process";
 /**
  * Wondering why this is .js instead of .ts? Get ready for a long read:
  * https://github.com/microsoft/TypeScript/issues/50501
@@ -22,11 +22,11 @@ import {
   gobbleFood,
   kittyCrunch,
   cook,
-} from './kitchen'
+} from "./kitchen";
 
 /**
  * tap is a utility for creating a "tap" in a monadic pipeline (such as a
- * promise chain). More simply: It puts a "tap" into a pipe. This is useful for
+ * promise chain). More snimply: It puts a "tap" into a pipe. This is useful for
  * doing effectful operations in the pipeline without disturbing the data flow
  * of the pipeline. A very typical use for tap is logging.
  *
@@ -44,50 +44,57 @@ import {
  *   .then(tap(x => console.log('step 2: number is ', x))
  */
 const tap2 = <A>(f: (a: A) => void, a: A): A => {
-  f(a)
-  return a
-}
-const tap1 = <A>(f: (a: A) => void): (a: A) => A => {
+  f(a);
+  return a;
+};
+const tap1 = <A>(f: (a: A) => void): ((a: A) => A) => {
   return (a: A): A => {
-    f(a)
-    return a
-  }
-}
+    f(a);
+    return a;
+  };
+};
 
 /**
  * This is one of the functions you'll need to implement to make your tests
  * work.
  */
 export const eatFood = (foods: ReadonlyArray<Food>): Promise<Belly> => {
-  return Promise.resolve({nutrients: 0})
-}
-
+  return foods.reduce(
+    (bellyPromise: Promise<Belly>, food: Food): Promise<Belly> => {
+      return bellyPromise.then((belly) => gobbleFood(food, belly));
+    },
+    Promise.resolve({ nutrients: 0 })
+  );
+};
 /**
  * This is one of the functions you'll need to implement to make your tests
  * work.
  */
 export const properCook = (): Promise<ReadonlyArray<Food>> => {
-  return Promise.resolve([])
-}
+  const allPromises: Array<Promise<Food>> = kittyCrunch.map(cook);
+  return Promise.all(allPromises);
+};
 
 export const incompleteCook = async (): Promise<ReadonlyArray<Food>> => {
-  const cookedFoods: any = kittyCrunch.map(async (food: Food): Promise<Food> => {
-    const cookedFood = await cook(food)
-    console.log('cooked food', cookedFood)
-    return cookedFood
-  })
-  return cookedFoods
-}
+  const cookedFoods: any = kittyCrunch.map(
+    async (food: Food): Promise<Food> => {
+      const cookedFood = await cook(food);
+      console.log("cooked food", cookedFood);
+      return cookedFood;
+    }
+  );
+  return cookedFoods;
+};
 
 export const slowCook = async (): Promise<ReadonlyArray<Food>> => {
-  const foods = []
-  for(let food of kittyCrunch) {
-    const cookedFood = await cook(food)
-    console.log('cooked food', cookedFood)
-    foods.push(cookedFood)
+  const foods = [];
+  for (let food of kittyCrunch) {
+    const cookedFood = await cook(food);
+    console.log("cooked food", cookedFood);
+    foods.push(cookedFood);
   }
-  return foods
-}
+  return foods;
+};
 
 // argv gives us all of the arguments that were passed to the current process.
 // The 0th argument is _always_ the current program name, and subsequent
@@ -95,8 +102,8 @@ export const slowCook = async (): Promise<ReadonlyArray<Food>> => {
 // the program to determine if this is the file we're running, or if it's
 // included via some other mechanism (such as our tests). We don't want to run
 // the main function on import.
-if(path.basename(__filename) == process.argv[0]) {
+if (path.basename(__filename) == process.argv[0]) {
   properCook()
     .then(eatFood)
-    .then(tap1(() => console.log('All done!')))
+    .then(tap1(() => console.log("All done!")));
 }
